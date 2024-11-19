@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string("name");
             $table->string("correctAnswer");
             $table->foreignId("prize_id")->constrained("prizes")->cascadeOnDelete();
+            $table->boolean("answered")->default(false);
             $table->timestamps();
         });
     }

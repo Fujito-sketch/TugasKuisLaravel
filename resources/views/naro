@@ -1,0 +1,162 @@
+<script setup>
+
+const questions = ref([]);
+const question = ref({});
+const prizes = ref([]);
+
+const answers = reactive({
+  answer1: "",
+  answer2: "",
+  answer3: "",
+  answer4: "",
+})
+
+const reverseQuestion = computed(() => {
+  return [...questions.value].reverse();
+});
+
+const availablePrizes = computed(() => {
+  return prizes.value ? prizes.value : [];
+});
+
+const availableQuestion = computed(() => {
+  return question.value;
+});
+
+fetch("http://127.0.0.1:8000/api/kuis")
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      questions.value = data.questions;
+      question.value = data.question;
+
+      answers.answer1 = data.question.answers[0].answer1;
+      answers.answer2 = data.question.answers[0].answer2;
+      answers.answer3 = data.question.answers[0].answer3;
+      answers.answer4 = data.question.answers[0].answer4;
+    });
+
+const answerQuestion = answer => {
+  fetch("http://127.0.0.1:8000/api/kuis", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      answer: answer,
+      question_id: question.value.id
+    }),
+  })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+
+        if (data.message === "Wrong answer") {
+          alert(data.message);
+          const router = useRouter();
+          router.push("/result");
+          return;
+        }
+
+        question.value = data.question;
+        answers.answer1 = data.question.answers[0].answer1;
+        answers.answer2 = data.question.answers[0].answer2;
+        answers.answer3 = data.question.answers[0].answer3;
+        answers.answer4 = data.question.answers[0].answer4;
+      })
+};
+</script>
+
+<template>
+  <main>
+    <div class="kuis-heading">
+      <h1 class="kuis-heading-title">Kuis Online</h1>
+      <div v-if="questions.length > 0" class="kuis-heading-prize">
+        <ul>
+          <li v-for="(q, index) in reverseQuestion" :key="index"
+              :class="{'active': question.prize.value === q.prize.value, 'active-answered': q.answered }">
+            {{ q.prize.value }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="kuis-wrapper">
+      <div v-if="availableQuestion" class="kuis-soal">
+        {{ question.name }}
+      </div>
+      <div class="kuis-jawaban">
+        <button type="button" @click="answerQuestion(answers.answer1)">A. {{ answers.answer1 }}</button>
+        <button type="button" @click="answerQuestion(answers.answer2)">B. {{ answers.answer2 }}</button>
+        <button type="button" @click="answerQuestion(answers.answer3)">C. {{ answers.answer3 }}</button>
+        <button type="button" @click="answerQuestion(answers.answer4)">D. {{ answers.answer4 }}</button>
+      </div>
+    </div>
+  </main>
+</template>
+
+<style scoped>
+.kuis-heading {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-top: 50px;
+}
+
+.kuis-heading-title {
+  color: #333;
+  font-size: 50px;
+  text-align: center;
+}
+
+.kuis-heading-prize {
+  border: 1px solid #333;
+  padding: 10px 20px;
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  border-radius: 5px;
+}
+
+.kuis-heading-prize .active {
+  background-color: #333;
+  color: #fff;
+}
+
+.kuis-heading-prize .active-answered {
+  background-color: red;
+  color: #fff;
+}
+
+.kuis-soal {
+  border: 1px solid #000;
+  max-width: 500px;
+  margin: 12px auto;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.kuis-jawaban {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 500px;
+  margin: 12px auto;
+}
+
+button {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #555;
+}
+</style>

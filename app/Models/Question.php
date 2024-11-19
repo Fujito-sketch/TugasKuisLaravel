@@ -14,6 +14,7 @@ class Question extends Model
         'name',
         'correctAnswer',
         'prize_id',
+        'answered',
     ];
 
     public function prize()
